@@ -7,6 +7,7 @@ import '../models/interval.dart' as ri;
 import '../models/task.dart';
 import '../providers/settings_provider.dart';
 import '../providers/task_provider.dart';
+import '../services/preset_library.dart';
 import '../widgets/category_icon.dart';
 
 class AddTaskScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,116 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     _intervalValueController.dispose();
     _advanceNoticeController.dispose();
     super.dispose();
+  }
+
+  void _applyPreset(PresetDefinition preset) {
+    setState(() {
+      _nameController.text = preset.name;
+      _selectedCategory = preset.category;
+      _selectedIntervalType = preset.intervalType;
+      _intervalValueController.text = '${preset.intervalValue}';
+    });
+  }
+
+  void _showPresetSheet() {
+    Category? activeCategory;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final filterCategories = [null, ...Category.values.where((c) => c != Category.other)];
+            final visiblePresets = PresetLibrary.byCategory(activeCategory);
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (_, scrollController) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(ctx).colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Text(
+                        'Browse presets',
+                        style: Theme.of(ctx).textTheme.titleMedium,
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: filterCategories.map((cat) {
+                          final label = cat == null ? 'All' : _categoryLabel(cat);
+                          final selected = cat == activeCategory;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(label),
+                              selected: selected,
+                              onSelected: (_) => setSheetState(() => activeCategory = cat),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: visiblePresets.length,
+                        itemBuilder: (_, index) {
+                          final preset = visiblePresets[index];
+                          return ListTile(
+                            leading: CategoryIcon(category: preset.category),
+                            title: Text(preset.name),
+                            subtitle: Text(preset.intervalSummary),
+                            onTap: () {
+                              Navigator.of(sheetContext).pop();
+                              _applyPreset(preset);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _categoryLabel(Category cat) {
+    const labels = {
+      Category.car: 'Car',
+      Category.home: 'Home',
+      Category.pet: 'Pet',
+      Category.health: 'Health',
+      Category.garden: 'Garden',
+      Category.other: 'Other',
+    };
+    return labels[cat] ?? cat.name;
   }
 
   Future<void> _pickDate() async {
@@ -120,7 +231,19 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+
+            // ── Browse presets ────────────────────────────────────────────────
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('browse_presets_button'),
+                onPressed: _showPresetSheet,
+                icon: const Icon(Icons.library_books_outlined, size: 18),
+                label: const Text('Browse presets'),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // ── Category ─────────────────────────────────────────────────────
             Text(
