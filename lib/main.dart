@@ -7,7 +7,9 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'models/category.dart';
 import 'models/interval.dart';
 import 'models/task.dart';
+import 'providers/settings_provider.dart';
 import 'providers/task_provider.dart';
+import 'screens/settings_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,9 +88,23 @@ class _RepeatRemindAppState extends ConsumerState<RepeatRemindApp>
           brightness: Brightness.dark,
         ),
       ),
-      themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: Center(child: Text('RepeatRemind — screens coming soon')),
+      themeMode: ref.watch(themeModeProvider),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('RepeatRemind'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: 'Settings',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+        body: const Center(child: Text('RepeatRemind — screens coming soon')),
       ),
     );
   }
