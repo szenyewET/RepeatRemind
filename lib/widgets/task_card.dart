@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../screens/task_detail_screen.dart';
 import 'category_icon.dart';
 
 String countdownLabel(DateTime nextDueDate, DateTime now) {
@@ -62,7 +63,11 @@ class TaskCard extends ConsumerWidget {
           ),
         ),
         onTap: () {
-          // Task detail — future issue
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => TaskDetailScreen(task: task),
+            ),
+          );
         },
       ),
     );

@@ -11,7 +11,9 @@ import '../services/preset_library.dart';
 import '../widgets/category_icon.dart';
 
 class AddTaskScreen extends ConsumerStatefulWidget {
-  const AddTaskScreen({super.key});
+  final Task? initialTask;
+
+  const AddTaskScreen({super.key, this.initialTask});
 
   @override
   ConsumerState<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -20,20 +22,34 @@ class AddTaskScreen extends ConsumerStatefulWidget {
 class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController = TextEditingController();
-  final _intervalValueController = TextEditingController(text: '1');
+  late final TextEditingController _nameController;
+  late final TextEditingController _intervalValueController;
   late final TextEditingController _advanceNoticeController;
+  late final TextEditingController _notesController;
 
-  Category _selectedCategory = Category.car;
-  ri.IntervalType _selectedIntervalType = ri.IntervalType.days;
-  DateTime _selectedDueDate = DateTime.now();
+  late Category _selectedCategory;
+  late ri.IntervalType _selectedIntervalType;
+  late DateTime _selectedDueDate;
 
   bool _advanceNoticeInitialised = false;
+
+  bool get _isEditing => widget.initialTask != null;
 
   @override
   void initState() {
     super.initState();
-    _advanceNoticeController = TextEditingController(text: '1');
+    final t = widget.initialTask;
+    _nameController = TextEditingController(text: t?.name ?? '');
+    _intervalValueController =
+        TextEditingController(text: t != null ? '${t.interval.value}' : '1');
+    _advanceNoticeController =
+        TextEditingController(text: t != null ? '${t.advanceNoticeDays}' : '1');
+    _notesController = TextEditingController(text: t?.notes ?? '');
+    _selectedCategory = t?.category ?? Category.car;
+    _selectedIntervalType = t?.interval.type ?? ri.IntervalType.days;
+    _selectedDueDate = t?.nextDueDate ?? DateTime.now();
+    // If editing, advance notice is already set from initialTask — skip settings default.
+    if (_isEditing) _advanceNoticeInitialised = true;
   }
 
   @override
@@ -41,6 +57,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     _nameController.dispose();
     _intervalValueController.dispose();
     _advanceNoticeController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -171,36 +188,50 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
     final intervalValue = int.tryParse(_intervalValueController.text) ?? 1;
     final advanceDays = int.tryParse(_advanceNoticeController.text) ?? 1;
+    final notesText = _notesController.text.trim();
 
-    final task = Task(
-      name: _nameController.text.trim(),
-      category: _selectedCategory,
-      interval: ri.Interval(type: _selectedIntervalType, value: intervalValue),
-      nextDueDate: _selectedDueDate,
-      advanceNoticeDays: advanceDays,
-      notes: null,
-    );
-
-    await ref.read(taskListProvider.notifier).add(task);
+    if (_isEditing) {
+      final edited = widget.initialTask!.copyWith(
+        name: _nameController.text.trim(),
+        category: _selectedCategory,
+        interval: ri.Interval(type: _selectedIntervalType, value: intervalValue),
+        nextDueDate: _selectedDueDate,
+        advanceNoticeDays: advanceDays,
+        notes: notesText.isEmpty ? null : notesText,
+      );
+      await ref.read(taskListProvider.notifier).edit(edited);
+    } else {
+      final task = Task(
+        name: _nameController.text.trim(),
+        category: _selectedCategory,
+        interval: ri.Interval(type: _selectedIntervalType, value: intervalValue),
+        nextDueDate: _selectedDueDate,
+        advanceNoticeDays: advanceDays,
+        notes: notesText.isEmpty ? null : notesText,
+      );
+      await ref.read(taskListProvider.notifier).add(task);
+    }
 
     if (mounted) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Initialise advance notice from settings once data is available.
-    final settingsAsync = ref.watch(settingsProvider);
-    settingsAsync.whenData((settings) {
-      if (!_advanceNoticeInitialised) {
-        _advanceNoticeController.text =
-            '${settings.defaultAdvanceNoticeDays}';
-        _advanceNoticeInitialised = true;
-      }
-    });
+    // Initialise advance notice from settings once data is available (new task only).
+    if (!_isEditing) {
+      final settingsAsync = ref.watch(settingsProvider);
+      settingsAsync.whenData((settings) {
+        if (!_advanceNoticeInitialised) {
+          _advanceNoticeController.text =
+              '${settings.defaultAdvanceNoticeDays}';
+          _advanceNoticeInitialised = true;
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Task'),
+        title: Text(_isEditing ? 'Edit Task' : 'New Task'),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
@@ -375,6 +406,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
             // ── Notes ─────────────────────────────────────────────────────────
             TextFormField(
               key: const Key('notes_field'),
+              controller: _notesController,
               decoration: const InputDecoration(
                 labelText: 'Notes (optional)',
                 border: OutlineInputBorder(),
