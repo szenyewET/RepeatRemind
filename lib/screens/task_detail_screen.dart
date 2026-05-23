@@ -5,6 +5,7 @@ import '../models/interval.dart' as ri;
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../widgets/category_icon.dart';
+import '../widgets/mark_as_done_sheet.dart';
 import 'add_task_screen.dart';
 
 class TaskDetailScreen extends ConsumerWidget {
@@ -81,11 +82,7 @@ class TaskDetailScreen extends ConsumerWidget {
 
           // ── Mark as Done ─────────────────────────────────────────────────
           ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Coming soon')),
-              );
-            },
+            onPressed: () => showMarkAsDoneSheet(context, ref, task),
             child: const Text('Mark as Done'),
           ),
         ],
