@@ -10,6 +10,7 @@ import 'models/task.dart';
 import 'providers/settings_provider.dart';
 import 'providers/task_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +28,11 @@ Future<void> main() async {
   await plugin.initialize(
     const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      ),
     ),
     onDidReceiveNotificationResponse: (_) {},
   );
@@ -89,7 +94,11 @@ class _RepeatRemindAppState extends ConsumerState<RepeatRemindApp>
         ),
       ),
       themeMode: ref.watch(themeModeProvider),
-      home: const HomeScreen(),
+      home: ref.watch(settingsProvider).when(
+        data: (s) => s.onboardingDone ? const HomeScreen() : const OnboardingScreen(),
+        loading: () => const Scaffold(body: SizedBox.shrink()),
+        error: (e, st) => const HomeScreen(),
+      ),
     );
   }
 }

@@ -37,6 +37,13 @@ class SettingsNotifier extends AsyncNotifier<SettingsService> {
     await svc.setNotificationTime(hour: hour, minute: minute);
     ref.notifyListeners();
   }
+
+  Future<void> setOnboardingDone() async {
+    final svc = state.value;
+    if (svc == null) return;
+    await svc.setOnboardingDone();
+    ref.notifyListeners();
+  }
 }
 
 final settingsProvider =
