@@ -6,6 +6,7 @@ class SettingsService {
   static const _keyAdvanceNoticeDays = 'defaultAdvanceNoticeDays';
   static const _keyNotificationHour = 'notificationHour';
   static const _keyNotificationMinute = 'notificationMinute';
+  static const _keyOnboardingDone = 'onboardingDone';
 
   final SharedPreferences _prefs;
 
@@ -45,5 +46,13 @@ class SettingsService {
   Future<void> setNotificationTime({required int hour, required int minute}) async {
     await _prefs.setInt(_keyNotificationHour, hour.clamp(0, 23));
     await _prefs.setInt(_keyNotificationMinute, minute.clamp(0, 59));
+  }
+
+  // ── onboarding ─────────────────────────────────────────────────────────────
+
+  bool get onboardingDone => _prefs.getBool(_keyOnboardingDone) ?? false;
+
+  Future<void> setOnboardingDone() async {
+    await _prefs.setBool(_keyOnboardingDone, true);
   }
 }
