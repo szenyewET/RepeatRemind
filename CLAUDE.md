@@ -132,3 +132,19 @@ Do not implement Phase 2+ features during Phase 1 work.
 - Calm UI — no anxiety-inducing red badges; gentle nudges
 - Fully offline — no network calls in the app logic
 - Categories: Car / Home / Pet / Health / Garden / Other (fixed set for MVP)
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`szenyewET/RepeatRemind`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — `CONTEXT.md` + `docs/adr/` at root. See `docs/agents/domain.md`.
