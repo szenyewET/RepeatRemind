@@ -59,3 +59,7 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 # Environment
 .env
 .env.*
+
+# Auto-generated tooling
+.agents/
+.idea/
